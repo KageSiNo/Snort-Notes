@@ -244,14 +244,17 @@ cd barnyard2-master/
 cp -v etc/barnyard2.conf /etc/snort/
 ```
 
-**Lưu ý**:
+<b style="color: red; font-size: 15px">Sửa lỗi: </b>
+
+
 Nếu gặp lỗi:
 ```
 spo_alert_fwsam.c:118:13: error: two or more data types in declaration specifiers 
 typedef int SOCKET;
 ```
-- Thì vào file `src/output-plugins/spo_alert_fwsam.c` thay các biến `SOCKET` thành `BAR2_SOCKET` hoặc dùng lệnh này ``sed -i 's/[^_]SOCKET/ BARNYARD2_SOCKET/g' src/output-plugins/spo_alert_fwsam.c``
+- Thì vào file `src/output-plugins/spo_alert_fwsam.c` thay các biến `SOCKET` thành `BAR2_SOCKET` hoặc dùng lệnh này ``sed -i 's/[^_]SOCKET/ BAR2_SOCKET/g' src/output-plugins/spo_alert_fwsam.c``
 <br>
+
 Nếu gặp lỗi:
 
 ```
