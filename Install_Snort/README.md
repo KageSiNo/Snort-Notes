@@ -99,7 +99,7 @@ wget https://www.snort.org/downloads/snort/snort-2.9.18.tar.gz
 tar -xzvf snort-2.9.18.tar.gz
 cd snort-2.9.18.tar.gz
 ./configure --enable-sourcefire
-sudo make & make install
+make && make install
 ```
 
 Kiểm tra lại version của snort.
