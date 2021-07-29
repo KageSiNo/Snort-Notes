@@ -240,11 +240,11 @@ systemctl enable mariadb.service --now
 wget https://github.com/firnsy/barnyard2/archive/master.tar.gz
 tar -xzvf master.tar.gz
 cd barnyard2-master/
-./autogen.sh && ./configure --with-mysql --with-mysql-libraries=/usr/lib64/mysql && make && make install
+./autogen.sh && ./configure --with-mysql --with-mysql-libraries=/usr/lib64/mysql && make && make install # Xem sửa lỗi ở dưới
 cp -v etc/barnyard2.conf /etc/snort/
 ```
 
-<b style="color: red; font-size: 15px">Sửa lỗi: </b>
+<b style="color: red; font-size: 15px">Sửa lỗi:</b>
 
 
 Nếu gặp lỗi:
