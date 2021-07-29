@@ -5,4 +5,4 @@
 
 - [Giới thiệu sơ qua về Snort.](overview.md)
 - [Nghiên cứu rule của Snort.](Rule_Snort)
-- [Cài đặt Snort.](Intall_Snort)
+- [Cài đặt Snort.](Install_Snort)
