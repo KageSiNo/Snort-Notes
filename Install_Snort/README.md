@@ -2,7 +2,7 @@
 
 
 <p align="center">
-  <img src="../images/topo.png">
+  <img src="./images/topo.png">
 </p>
 
 
@@ -95,7 +95,6 @@ dnf install snort-2.9.18-1.centos8.x86_64.rpm -y
 
 - Cách 3:
 ```sh
-cd ~/snort_src
 wget https://www.snort.org/downloads/snort/snort-2.9.18.tar.gz
 tar -xzvf snort-2.9.18.tar.gz
 cd snort-2.9.18.tar.gz
@@ -124,6 +123,7 @@ touch /etc/snort/rules/white_list.rules
 touch /etc/snort/rules/black_list.rules
 touch /etc/snort/rules/local.rules
 touch /etc/snort/rules/snort.rules
+touch /etc/snort/sid-msg.map
 touch /var/log/snort/snort.log
 ```
 
@@ -139,7 +139,7 @@ chown -R snort:snort /usr/local/lib/snort_dynamicrules
 ```
 ### <u>Bước 5: Cấu hình Snort chạy ở chế độ NIDS.</u>
 
-Chỉnh sửa lại file cấu hình Snort (/etc/snort/snort.conf).
+Chỉnh sửa lại file cấu hình Snort (`/etc/snort/snort.conf`).
 ```sh
 sed -i 's/include \$RULE\_PATH/#include \$RULE\_PATH/' /etc/snort/snort.conf
 vi /etc/snort/snort.conf
@@ -208,22 +208,127 @@ Truy cập tập tin local.rules.
 ```sh
 vi /etc/snort/rules/local.rules
 ```
-Thêm nội dung rule vào tập tin
+Thêm nội dung rule vào tập tin local.rules
 ```sh
-drop icmp any any -> $HOME_NET any (msg:"--> Ping of death attack!"; dsize:>10000; gid:1000001; sid:1000001;rev:1;)
+drop icmp any any -> $HOME_NET any (msg:"--> Ping of death attack!"; dsize:>10000; gid:1000001; sid:1000001; rev:1;)
 ```
+Thêm cấu sau vào tập tin `/etc/snort/sid-msg.map` để bật trigger cảnh báo.
+```sh
+1 || 10000001 || 001 || icmp-event || 0 || ICMP Test detected || url,tools.ietf.org/html/rfc792
+```
+
 Chạy lệnh giam sát snort trên console và theo dõi
 ```sh
 snort -c /etc/snort/snort.conf -i ens33:ens34 -A console -Q -u snort -g snort -q
 ```
 <p align="center">
-  <img height="400" src="../images/drop_pingofdeath.png">
+  <img height="400" src="./images/drop_pingofdeath.png">
 </p>
 
 Ngăn chặn thành công cuộc tấn công "Ping of death".
 
+## Cài đặt `Barnyard2` cho Snort.
+### <u>Bước 1: Cài đặt cơ sở dử liệu mysql.</u>
+Ở đây mình dùng hệ quản trị cơ sở dữ liệu mysql.
+```sh
+dnf install mariadb-server mysql-libs mysql-devel -y
+# Start and enable mariadb-sever
+systemctl enable mariadb.service --now
+```
+### <u>Bước 2: Tải, cài đặt và cấu hình "Barnyard2".</u>
+```sh
+wget https://github.com/firnsy/barnyard2/archive/master.tar.gz
+tar -xzvf master.tar.gz
+cd barnyard2-master/
+./autogen.sh && ./configure --with-mysql --with-mysql-libraries=/usr/lib64/mysql && make && make install
+cp -v etc/barnyard2.conf /etc/snort/
+```
+
+**Lưu ý**:
+Nếu gặp lỗi:
+```
+spo_alert_fwsam.c:118:13: error: two or more data types in declaration specifiers 
+typedef int SOCKET;
+```
+- Thì vào file `src/output-plugins/spo_alert_fwsam.c` thay các biến `SOCKET` thành `BAR2_SOCKET` hoặc dùng lệnh này ``sed -i 's/[^_]SOCKET/ BARNYARD2_SOCKET/g' src/output-plugins/spo_alert_fwsam.c``
+<br>
+Nếu gặp lỗi:
+
+```
+../output-plugins/spo_database.h:360:5: error: unknown type name ‘my_bool’
+     my_bool mysql_reconnect; /* We will handle it via the api. */
+```
+- Thì vào file `src/output-plugins/spo_database.h` thay biến `my_bool` ở dòng 360 thành `bool` hoặc dùng lệnh này ``sed -i 's/my_bool/bool/g' src/output-plugins/spo_database.h``
+
+Kiểm tra xem cài đặt thành công chưa.
+```sh
+barnyard2 -V
+```
+Truy cập file cấu hình barnyard2.
+
+```sh
+vi /etc/snort/barnyard2.conf
+```
+
+Tạo cấu trúc lưu trữ cho barnyard2.
+```sh
+mkdir /var/log/barnyard2
+chown -R snort:snort /var/log/barnyard2
+touch /var/log/snort/barnyard2.waldo
+chown snort:snort /var/log/snort/barnyard2.waldo
+```
+
+Truy cập file cấu hình snort và điều chỉnh lại dòng 521.
+```sh
+vi /etc/snort/snort.conf
+...
+output unified2: filename snort.u2, limit 128
+```
+
+### <u>Bước 3: Tạo cơ sở dữ liệu.</u>
+```sh
+mysql -u root -p
+
+MariaDB [(none)]> create database snort;
+MariaDB [(none)]> use snort;
+MariaDB [snort]> source ~/barnyard2-master/schemas/create_mysql; # Đường dẫn tới barnyard2
+MariaDB [snort]> CREATE USER 'snort'@'localhost' IDENTIFIED BY '123456';
+MariaDB [snort]> grant create, insert, select, delete, update on snort.* to 'snort'@'localhost'; 
+```
+
+Khai báo thông tin csdl.
+```sh
+echo 'output database: log, mysql, user=snort password=123456 dbname=snort host=localhost sensor name=sensor01' >> /etc/snort/barnyard2.conf
+```
+### <u>Bước 4: Kiểm tra.</u>
+Thực hiện tấn công "Ping of death".
+Chạy Snort
+```sh
+snort -c /etc/snort/snort.conf -i ens33:ens34 -Q -u snort -g snort -q
+```
+
+Chạy barnyard2.
+```sh
+barnyard2 -c /etc/snort/barnyard2.conf -d /var/log/snort -f snort.u2 -w /var/log/snort/barnyard2.waldo -g snort -u snort
+```
+
+Khi ra kết quả như ảnh dưới là đã thành công.
+<p align="center">
+  <img height="300" src="./images/barnyard2_test_1.png">
+</p>
+
+Kiểm tra cơ sở dữ liệu.
+```sh
+mysql -u snort -p -D snort -e "select * from event"
+Password:123456
+```
+<p align="center">
+  <img height="400" src="./images/barnyard2_test_2.png">
+</p>
+
 ## Cài đặt "PulledPork" cho Snort.
-## Cài đặt "Barnyard2" cho Snort.
+
+
 ## Cài đặt "BASE" cho Snort.
 
 
