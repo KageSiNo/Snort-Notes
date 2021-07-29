@@ -100,8 +100,7 @@ wget https://www.snort.org/downloads/snort/snort-2.9.18.tar.gz
 tar -xzvf snort-2.9.18.tar.gz
 cd snort-2.9.18.tar.gz
 ./configure --enable-sourcefire
-make
-make install
+sudo make & make install
 ```
 
 Kiểm tra lại version của snort.
@@ -228,8 +227,6 @@ Ngăn chặn thành công cuộc tấn công "Ping of death".
 ## Cài đặt "BASE" cho Snort.
 
 
-
-Thế là đã ngăn chặn được cuộc tấn cống "Ping of death" tới server
 # Tham khảo
 - <a>https://programmersought.com/article/61256098977/</a>
 
