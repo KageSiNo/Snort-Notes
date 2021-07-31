@@ -330,7 +330,158 @@ Password:123456
 </p>
 
 ## Cài đặt "PulledPork" cho Snort.
+**Lưu ý**: Bạn cần tạo một tài khoản trên https://snort.org/ để có oinkcode để tải về những rule mới nhất.
+### <u>Bước 1: Tải và cài đặt PulledPork.</u>
+Cài đặt các gói cần thiết
+```sh
+dnf install perl-libwww-perl perl-core -y
+```
+Tải và cài đặt
+```sh
+git clone https://github.com/shirkdog/pulledpork.git
+cd pulledpork/
+cp pulledpork.pl /usr/local/bin
+chmod +x /usr/local/bin/pulledpork.pl
+cp etc/*.conf /etc/snort
+```
 
+Tạo cấu lưu trữ.
+```sh
+mkdir /etc/snort/rules/iplists
+touch /etc/snort/rules/iplists/default.blacklist
+touch /etc/snort/rules/iplists/default
+chown -R snort:snort /etc/snort/rules/iplists
+```
+
+Kiểm tra pulledpork đã cài đặt thành công
+```sh
+pulledpork.pl -V
+```
+
+### <u>Bước 2: Cấu hình PulledPork.</u>
+Truy cập file `/etc/snort/pulledpork.conf`
+
+```sh
+vi /etc/snort/pulledpork.conf
+```
+
+- CHỉnh sửa dòng 19. `<oinkcode>` đổi thành oinkcode của bạn.
+```vim
+ rule_url=https://www.snort.org/reg-rules/|snortrules-snapshot.tar.gz|d98f4a3c88axxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+- Command dòng 21.
+
+- Thay đổi dòng 72.
+```vim
+rule_path=/etc/snort/rules/snort.rules
+```
+
+- Thay đổi dòng 87.
+```vim
+local_rules=/etc/snort/rules/local.rules
+```
+- Thay đổi dòng 90.
+```vim
+sid_msg=/etc/snort/sid-msg.map
+```
+
+- Thay đổi dòng 113.
+```vim
+snort_path=/usr/sbin/snort
+```
+- Thay đổi dòng 117.
+```vim
+config_path=/etc/snort/snort.conf
+```
+- Thay đổi dòng 134.
+```vim
+distro=Centos-8
+```
+- Thay đổi dòng 142.
+```vim
+/etc/snort/rules/iplists/default.blacklist
+```
+- Thay đổi dòng 151.
+```vim
+IPRVersion=/etc/snort/rules/iplists
+```
+
+- Bỏ Command dòng 200 đến 203.
+```vim
+enablesid=/etc/snort/enablesid.conf
+dropsid=/etc/snort/dropsid.conf
+disablesid=/etc/snort/disablesid.conf
+modifysid=/etc/snort/modifysid.conf
+```
+
+Kiểm tra xem thành công không. Nếu không xuất hiện  `Error` là thành công.
+```sh
+pulledpork.pl -c /etc/snort/pulledpork.conf
+```
+### <u>Bước 3: Sử dụng PulledPork.</u>
+Chạy lệnh dưới để sử dụng.
+```sh
+pulledpork.pl -c /etc/snort/pulledpork.conf -l
+```
+
+Truy cập file `/etc/snort/rules/snort.rules` để xem rule đã được cập nhập chưa.
+
+### <u>Bước 4: Đặt lịch để PulledPork cập nhật.</u>
+```sh
+crontab -e
+# thêm vào crontab dòng sau để chỉ định cập nhật 5 phút mỗi lần
+* */5 * * * pulledpork.pl -c /etc/snort/pulledpork.conf -l
+```
+
+## Cấu hình tự động khởi động cùng Hệ thống.
+
+Khi bạn khởi động lại HĐH, bạn muốn Snort và Barnyard2 khởi động cùng thì cần cấu hình như sau.
+
+Mở file `/lib/systemd/system/snort.service` và thêm nội dung sau vào, lưu ý thay interface mong muốn
+```sh
+[Unit]
+Description=Snort NIDS Daemon
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart=snort -q -u snort -g snort -c /etc/snort/snort.conf -i ens33:ens34 -Q
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Chạy lệnh sau để báo systemD bật khi khởi động
+```sh
+systemctl enable snort
+```
+
+Khởi động service
+```sh
+systemctl start snort
+```
+
+Tiếp tục cấu hình cho Barnyard2 bằng cách tạo file `vi /lib/systemd/system/barnyard2.service` và thêm nội dung sau:
+```sh
+[Unit]
+Description=Barnyard2 Daemon
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart=barnyard2 -c /etc/snort/barnyard2.conf -d /var/log/snort -f snort.u2 -q -w /var/log/snort/barnyard2.waldo -g snort -u snort -D
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Báo cho systemD khởi động barnyard2 khi khởi động và khởi động lại barnyard2
+```sh
+systemctl enable barnyard2
+
+systemctl start barnyard2
+```
 
 ## Cài đặt "BASE" cho Snort.
 
