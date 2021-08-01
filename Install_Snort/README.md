@@ -478,13 +478,93 @@ WantedBy=multi-user.target
 
 Báo cho systemD khởi động barnyard2 khi khởi động và khởi động lại barnyard2
 ```sh
-systemctl enable barnyard2
-
-systemctl start barnyard2
+systemctl enable barnyard2 --now
 ```
 
 ## Cài đặt "BASE" cho Snort.
+### <u>Bước 1: Cài đặt các gói cần thiết.</u>
+```sh
+dnf install httpd php* -y
+```
 
+Khởi động httpd 
+```sh
+firewall-cmd --add-service=http --permanent
+firewall-cmd --reload
+systemctl enable httpd.service --now
+```
+
+### <u>Bước 2: Tải Source Code BASE.</u>
+Tải và copy source vào thư mục html
+```sh
+git clone https://github.com/loveyuki147/base1.4.5
+cp -r base1.4.5/ /var/www/html/base
+chown -R apache:apache /var/www
+```
+
+### <u>Bước 3: Tải Source Code ADODB.</u>
+Tải và copy source vào thư mục html.
+```sh
+git clone https://github.com/ADOdb/ADOdb
+cp -r ADOdb/ /var/www/html/adodb
+chown -R apache:apache /var/www
+```
+### <u>Bước 4: Cấu hình BASE.</u>
+
+Truy cập file `/etc/php.ini`
+
+- Sửa dòng 460.
+```vim
+error_reporting = E_ALL & ~E_NOTICE
+```
+Chạy lại php để php nhận lại cấu hình.
+```sh
+systemctl restart php-fpm.service
+```
+Truy cập theo địa chỉ  `http://IP/base/` của máy Snort.
+Bấm `continue`.
+![BASE_SETUP](./images/base_setup_0.png)
+
+Tiếp tục nhập dữ liệu như hình dưới
+- Pick a Language: Lựa chọn ngôn ngữ phù hợp.
+- Path to ADODB: Đường dẫn tới ADODB.
+- Bấm `Continue` để tiếp tục
+![BASE_SETUP](./images/base_setup_1.png)
+
+Tiếp tục nhập dữ liệu như hình dưới
+- Pick a Database type:	 Lựa chọn hệ quạn trị csdl.
+- Database Name: Tên Database ta đã tạo lúc cài đặt `Barnyard2`.
+- Database User Name: Username của Database Tương tự như lúc cài `Barnyard2`.
+- Database Password: Password của Username `snort` Tương tự như lúc cài `Barnyard2`.
+- Bấm `Continue` để tiếp tục
+![BASE_SETUP](./images/base_setup_2.png)
+
+Tiếp tục nhập dữ liệu như hình dưới
+- Admin User Name: Username của người quản trị.
+- Password:	Mật khẩu của người quản trị.
+- Full Name: Tên người quản trị.
+- Bấm `Continue` để tiếp tục
+![BASE_SETUP](./images/base_setup_3.png)
+
+Tiếp tục nhập dữ liệu như hình dưới
+- Admin User Name: Username của người quản trị.
+- Password:	Mật khẩu của người quản trị.
+- Full Name: Tên người quản trị.
+- Bấm `Continue` để tiếp tục
+![BASE_SETUP](./images/base_setup_3.png)
+
+Làm theo các bước dưới:
+![BASE_SETUP](./images/base_setup_4_1.png)
+![BASE_SETUP](./images/base_setup_4_2.png)
+
+Copy toàn bộ code php ở dưới vào tập tin `/var/www/base/base_conf.php`. Nhớ set cho nó thuộc quyền sở hữu của apache
+![BASE_SETUP](./images/base_setup_5.png)
+
+<br>
+
+
+#### Truy cập lại đường dẫn `http://IP/base/`. Ta có thể thấy giao diện BASE đã xuất hiện.
+![BASE_SETUP](./images/base_final.png)
 
 # Tham khảo
 - <a>https://programmersought.com/article/61256098977/</a>
