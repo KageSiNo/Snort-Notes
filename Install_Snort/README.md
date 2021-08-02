@@ -15,6 +15,8 @@ Các package được cài đặt kèm theo:
 - <b><u>PulledPork</b></u>: tự động tải các Snort rule miễn phí mới nhất.
 - <b><u>BASE</b></u>: giao diện đồ họa nền web viết bằng php, dùng để xem các Snort event.
 
+**Lưu ý**: Toàn bộ đường dẫn để tải các file cần thiết ở dưới có thể bị chết hoặc thay thế trong tương lai.
+
 ## Kịch bản
 Cấu hình NIPS sử dụng Snort để bảo vệ vùng DMZ của doanh nghiệp khỏi các tác nhân gây hại đi vào vùng này. Cấu hình Snort bảo vệ server trước cuộc tấn công "Ping of death". Cài đặt và thử nghiệm một số package của Snort. 
 
@@ -55,7 +57,7 @@ Cài đặt các thư viên cần thiết để Snort hoạt động:
 
 Cài đặt thêm một số công cụ cần thiết.
 ```sh
-dnf install  gcc flex bison zlib* libxml2 libpcap* pcre* tcpdump git libtool curl libdnet -y
+dnf install  gcc flex bison zlib* git libxml2 libpcap* pcre* tcpdump git libtool curl libdnet -y
 dnf --enablerepo=powertools install libdnet-devel -y
 dnf --enablerepo=powertools install libpcap-devel -y
 
