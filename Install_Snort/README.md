@@ -44,7 +44,8 @@ ethtool -K ens34 lro off
 
 Reset lại interface.
 ```sh
-nmcli connection down $INTERFACE && nmcli connection up $INTERFACE
+nmcli connection up ens33
+nmcli connection up ens34
 ```
 
 
