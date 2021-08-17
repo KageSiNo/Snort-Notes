@@ -38,8 +38,8 @@ dnf install ethtool -y
 Để tắt LRO và GRO ta sử dụng lệnh ethtool. Thêm 02 dòng sau vào mỗi interface.
 
 ```sh
-ethtool -K $INTERFACE gro off
-ethtool -K $INTERFACE lro off
+ethtool -K ens33 gro off
+ethtool -K ens34 lro off
 ```
 
 Reset lại interface.
