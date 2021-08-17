@@ -75,7 +75,7 @@ echo /usr/lib >> /etc/ld.so.conf
 echo /usr/local/lib >> /etc/ld.so.conf
 ```
 
-Tạo sysmbol link cho libdnet
+Tạo symbolic link cho libdnet
 ```sh
 ln -s /usr/lib64/libdnet.so.1.0.1 /lib64/libdnet.1
 ```
